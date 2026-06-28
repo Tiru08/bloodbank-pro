@@ -1,54 +1,36 @@
-# 🩸 BloodBank Pro — Web App
+# Blood Bank Management System
 
-A Flask web app with ML features, ready to deploy on Render.com (free).
+A blood bank management system I built using Python and Flask with machine 
+learning features. Manages donors, inventory, blood requests and uses ML 
+to predict donor eligibility and blood demand.
 
-## 🚀 Deploy to Render (get a free link)
+## Features
 
-### Step 1 — Push to GitHub
-1. Create a new repo on github.com (e.g. `bloodbank-pro`)
-2. Upload all these files to it
+- Donor management with ML eligibility prediction
+- Blood inventory tracking with expiry alerts
+- Hospital blood request system
+- Demand forecasting for next month
+- Blood type compatibility checker
 
-### Step 2 — Deploy on Render
-1. Go to **render.com** → Sign up free
-2. Click **"New +"** → **"Web Service"**
-3. Connect your GitHub repo
-4. Fill in:
-   - **Name**: bloodbank-pro
-   - **Runtime**: Python 3
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app:app --bind 0.0.0.0:$PORT`
-5. Click **"Create Web Service"**
-6. Wait ~2 minutes → get your link like `https://bloodbank-pro.onrender.com`
+## Tech Stack
 
-## 🗂 File Structure
+- Python, Flask
+- SQLite
+- scikit-learn
+- Chart.js
 
-```
-bloodbank_web/
-├── app.py            # Flask routes + API endpoints
-├── database.py       # SQLite setup + sample data
-├── ml_engine.py      # 4 ML models
-├── requirements.txt  # Python dependencies
-├── Procfile          # Render start command
-└── templates/
-    ├── base.html       # Sidebar + layout
-    ├── dashboard.html  # Stats + charts
-    ├── donors.html     # Donor list
-    ├── donor_detail.html
-    ├── donor_form.html
-    ├── inventory.html
-    ├── requests.html
-    └── ml_tools.html   # Eligibility + Forecast + Compat
-```
+## How to run
 
-## 🤖 ML Features
-- **Donor Eligibility** — Random Forest (94% accuracy)
-- **Expiry Risk Alerts** — Rule-based risk scoring
-- **Demand Forecast** — Gradient Boosting per blood type
-- **Compatibility Checker** — Full ABO+Rh matrix
-
-## 💻 Run Locally
 ```bash
 pip install flask scikit-learn pandas numpy gunicorn
 python app.py
-# Open http://localhost:5000
 ```
+
+Open http://localhost:5000
+
+## ML Models
+
+- Donor eligibility — Random Forest (94% accuracy)
+- Expiry risk — rule based scoring
+- Demand forecast — Gradient Boosting
+- Compatibility — ABO+Rh rules
