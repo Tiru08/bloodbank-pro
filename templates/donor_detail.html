@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}— {{ donor.name }}{% endblock %}
+{% block content %}
+<div class="topbar">
+  <h1>{{ donor.name }}</h1>
+  <div style="display:flex;gap:8px">
+    <a href="/donors/{{ donor.id }}/edit" class="btn btn-secondary btn-sm">✏️ Edit</a>
+    <a href="/donors" class="btn btn-secondary btn-sm">← Back</a>
+  </div>
+</div>
+<div class="content">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+    <div class="card">
+      <div class="card-title">Donor Info</div>
+      <table style="font-size:13px;width:100%">
+        {% for label, val in [
+          ('Blood Type', donor.blood_type),
+          ('Age', (donor.age|string + ' years') if donor.age else '—'),
+          ('Gender', donor.gender or '—'),
+          ('Phone', donor.phone or '—'),
+          ('Email', donor.email or '—'),
+          ('Weight', (donor.weight|string + ' kg') if donor.weight else '—'),
+          ('Hemoglobin', (donor.hemoglobin|string + ' g/dL') if donor.hemoglobin else '—'),
+          ('Last Donation', donor.last_donation or 'Never'),
+          ('Total Donations', donor.donations_count|string),
+          ('Medical Conditions', donor.medical_conditions or 'None'),
+        ] %}
+        <tr>
+          <td style="color:var(--dim);padding:7px 0;width:45%">{{ label }}</td>
+          <td style="font-weight:500;padding:7px 0">{{ val }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🤖 ML Eligibility Result</div>
+      <div class="result-box {% if ml.eligible %}result-eligible{% else %}result-not{% endif %}">
+        <div style="font-size:24px;font-weight:700;color:{% if ml.eligible %}var(--success){% else %}var(--danger){% endif %}">
+          {% if ml.eligible %}✅ ELIGIBLE TO DONATE{% else %}⛔ NOT ELIGIBLE{% endif %}
+        </div>
+        <div style="color:var(--dim);font-size:12px;margin-top:6px">
+          ML Confidence: <strong style="color:var(--text)">{{ ml.confidence }}%</strong>
+          &nbsp;·&nbsp; Days since last donation: <strong style="color:var(--text)">{{ ml.days_since_last }}</strong>
+        </div>
+      </div>
+
+      {% if ml.reasons %}
+      <div style="margin-top:14px">
+        <div style="font-size:12px;font-weight:600;color:var(--dim);margin-bottom:8px">ISSUES FOUND</div>
+        {% for r in ml.reasons %}
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;font-size:13px">
+          <span style="color:var(--warning)">⚠</span>
+          <span>{{ r }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="margin-top:14px;color:var(--success);font-size:13px">✓ All criteria met — no issues found</div>
+      {% endif %}
+
+      {% if ml.next_eligible_date and ml.next_eligible_date != 'Now' %}
+      <div style="margin-top:12px;padding:10px 14px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--accent2)">
+        📅 Next eligible date: <strong>{{ ml.next_eligible_date }}</strong>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}— Dashboard{% endblock %}
+{% block content %}
+<div class="topbar">
+  <h1>📊 Dashboard</h1>
+  <span style="color:var(--dim);font-size:13px">{{ now }}</span>
+</div>
+<div class="content">
+
+  <div class="stats-grid">
+    <div class="stat-card" style="border-left-color:var(--accent)">
+      <div class="stat-label">Total Donors</div>
+      <div class="stat-value">{{ total_donors }}</div>
+      <div class="stat-sub">Registered donors</div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--accent2)">
+      <div class="stat-label">Blood Units</div>
+      <div class="stat-value" style="color:var(--accent2)">{{ total_units }}</div>
+      <div class="stat-sub">Available in inventory</div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--warning)">
+      <div class="stat-label">Expiring Soon</div>
+      <div class="stat-value" style="color:var(--warning)">{{ critical_units }}</div>
+      <div class="stat-sub">Units within 7 days</div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--danger)">
+      <div class="stat-label">Pending Requests</div>
+      <div class="stat-value" style="color:var(--danger)">{{ pending_req }}</div>
+      <div class="stat-sub">Awaiting fulfillment</div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-wrap">
+      <div class="chart-title">🩸 Inventory by Blood Type</div>
+      <canvas id="invChart" height="220"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">⚠️ Expiry Risk Overview</div>
+      <canvas id="riskChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Quick Actions</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a href="/donors/add" class="btn btn-primary">+ Add Donor</a>
+      <a href="/inventory" class="btn btn-secondary">View Inventory</a>
+      <a href="/requests" class="btn btn-secondary">Blood Requests</a>
+      <a href="/ml" class="btn btn-secondary">🤖 ML Tools</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const BT_COLORS = {
+  "A+":"#E63946","A-":"#C0392B","B+":"#F39C12","B-":"#D35400",
+  "O+":"#27AE60","O-":"#1E8449","AB+":"#2980B9","AB-":"#1A5276"
+};
+const invData = {{ inv_data | tojson }};
+const btLabels = {{ blood_types | tojson }};
+const vals = btLabels.map(bt => invData[bt] || 0);
+const colors = btLabels.map(bt => BT_COLORS[bt] || "#E63946");
+
+new Chart(document.getElementById("invChart"), {
+  type:"bar",
+  data:{ labels:btLabels, datasets:[{ data:vals, backgroundColor:colors, borderRadius:6, borderSkipped:false }] },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false} },
+    scales:{
+      x:{ ticks:{color:"#8899AA"}, grid:{color:"#253545"} },
+      y:{ ticks:{color:"#8899AA"}, grid:{color:"#253545"} }
+    }
+  }
+});
+
+const risk = {{ risk_summary | tojson }};
+const riskLabels = ["Expired","Critical","High","Medium","Safe"];
+const riskVals = [risk.expired||0, risk.critical||0, risk.high||0, risk.medium||0, risk.low||0];
+const riskColors = ["#E74C3C","#C0392B","#F39C12","#F1C40F","#2ECC71"];
+const nonZero = riskLabels.map((l,i)=>({l,v:riskVals[i],c:riskColors[i]})).filter(x=>x.v>0);
+
+new Chart(document.getElementById("riskChart"), {
+  type:"doughnut",
+  data:{
+    labels: nonZero.map(x=>x.l),
+    datasets:[{ data:nonZero.map(x=>x.v), backgroundColor:nonZero.map(x=>x.c), borderWidth:2, borderColor:"#162330" }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ position:"right", labels:{color:"#ECF0F1",font:{size:12}} } }
+  }
+});
+</script>
+{% endblock %}

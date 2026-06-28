@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}— Donors{% endblock %}
+{% block content %}
+<div class="topbar">
+  <h1>👤 Donors</h1>
+  <a href="/donors/add" class="btn btn-primary">+ Add Donor</a>
+</div>
+<div class="content">
+
+  <form method="GET" style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+    <input name="search" value="{{ search }}" placeholder="Search by name..." class="form-control" style="max-width:240px">
+    <select name="bt" class="form-control" style="max-width:120px">
+      <option value="All" {% if bt_filter=='All' %}selected{% endif %}>All Types</option>
+      {% for bt in blood_types %}
+      <option value="{{ bt }}" {% if bt_filter==bt %}selected{% endif %}>{{ bt }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-secondary">Filter</button>
+  </form>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Name</th><th>Blood Type</th><th>Age</th>
+          <th>Phone</th><th>Last Donation</th><th>Donations</th><th>ML Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in donors %}
+        <tr style="cursor:pointer" onclick="location.href='/donors/{{ d.id }}'">
+          <td style="color:var(--dim)">{{ d.id }}</td>
+          <td style="font-weight:600">{{ d.name }}</td>
+          <td>
+            <span class="badge" style="background:{{ {'A+':'#4d1a1d','A-':'#3d1518','B+':'#4d3000','B-':'#3d2600','O+':'#0d3d1e','O-':'#0a2e16','AB+':'#0d2040','AB-':'#0a1830'}[d.blood_type] or '#253545' }};color:{{ {'A+':'#E63946','A-':'#C0392B','B+':'#F39C12','B-':'#D35400','O+':'#27AE60','O-':'#1E8449','AB+':'#2980B9','AB-':'#1A5276'}[d.blood_type] or '#8899AA' }}">
+              {{ d.blood_type }}
+            </span>
+          </td>
+          <td>{{ d.age or '—' }}</td>
+          <td>{{ d.phone or '—' }}</td>
+          <td>{{ d.last_donation or 'Never' }}</td>
+          <td>{{ d.donations_count or 0 }}</td>
+          <td>
+            {% if d.eligible %}
+              <span class="badge badge-success">✅ Eligible</span>
+            {% else %}
+              <span class="badge badge-danger">⛔ Not Eligible</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;color:var(--dim);padding:30px">No donors found</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:10px;color:var(--dim);font-size:12px">{{ donors|length }} donor(s) shown</div>
+</div>
+{% endblock %}

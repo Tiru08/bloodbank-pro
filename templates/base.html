@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BloodBank Pro {% block title %}{% endblock %}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0F1923;--surface:#162330;--surface2:#1E3040;
+  --accent:#E63946;--accent2:#2196F3;--success:#2ECC71;
+  --warning:#F39C12;--danger:#E74C3C;
+  --text:#ECF0F1;--dim:#8899AA;--border:#253545;
+  --radius:10px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-logo{padding:20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-icon{width:38px;height:38px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.logo-text{font-size:15px;font-weight:700;color:var(--text)}
+.logo-sub{font-size:10px;color:var(--dim)}
+nav{padding:12px 0;flex:1}
+.nav-link{display:flex;align-items:center;gap:10px;padding:10px 16px;color:var(--dim);text-decoration:none;font-size:13px;font-weight:500;transition:.15s;border-left:3px solid transparent}
+.nav-link:hover{color:var(--text);background:var(--surface2)}
+.nav-link.active{color:var(--text);background:var(--surface2);border-left-color:var(--accent)}
+.nav-link .icon{font-size:17px;width:20px;text-align:center}
+.sidebar-footer{padding:14px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--dim)}
+
+/* Main */
+.main{flex:1;overflow:auto}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.topbar h1{font-size:20px;font-weight:700}
+.content{padding:24px 28px}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.card-title{font-size:13px;font-weight:600;color:var(--dim);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px}
+
+/* Stat cards */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 18px 16px;border-left:4px solid var(--accent);position:relative;overflow:hidden}
+.stat-label{font-size:11px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:32px;font-weight:700;margin:4px 0 2px}
+.stat-sub{font-size:11px;color:var(--dim)}
+
+/* Table */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--surface2);color:var(--dim);font-weight:600;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+td{padding:11px 14px;border-top:1px solid var(--border);color:var(--text)}
+tr:hover td{background:var(--surface2)}
+
+/* Badges */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-success{background:#1e4d35;color:#2ECC71}
+.badge-danger{background:#4d1e1e;color:#E74C3C}
+.badge-warning{background:#4d3a1e;color:#F39C12}
+.badge-info{background:#1e2d4d;color:#2196F3}
+.badge-gray{background:var(--surface2);color:var(--dim)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.15s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#c62834}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--border)}
+.btn-success{background:var(--success);color:#fff}
+.btn-sm{padding:5px 12px;font-size:12px}
+
+/* Forms */
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;color:var(--dim);margin-bottom:6px;font-weight:600}
+.form-control{width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;transition:.15s}
+.form-control:focus{border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* Charts grid */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px}
+
+/* ML result box */
+.result-box{border-radius:var(--radius);padding:20px;border:1px solid var(--border);margin-top:16px}
+.result-eligible{background:#0d2e1e;border-color:#2ECC71}
+.result-not{background:#2e0d0d;border-color:#E74C3C}
+
+/* Blood type pills */
+.bt-pill{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700}
+
+/* Alerts */
+.alert{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px}
+.alert-warning{background:#4d3a1e40;border:1px solid var(--warning);color:var(--warning)}
+
+/* Responsive */
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .charts-grid{grid-template-columns:1fr}
+  .sidebar{width:60px}
+  .nav-link span,.logo-text,.logo-sub,.sidebar-footer{display:none}
+  .logo-icon{margin:0 auto}
+  .sidebar-logo{justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🩸</div>
+    <div>
+      <div class="logo-text">BloodBank Pro</div>
+      <div class="logo-sub">Management System</div>
+    </div>
+  </div>
+  <nav>
+    <a href="/" class="nav-link {% if request.path=='/' %}active{% endif %}">
+      <span class="icon">📊</span><span>Dashboard</span>
+    </a>
+    <a href="/donors" class="nav-link {% if '/donors' in request.path %}active{% endif %}">
+      <span class="icon">👤</span><span>Donors</span>
+    </a>
+    <a href="/inventory" class="nav-link {% if '/inventory' in request.path %}active{% endif %}">
+      <span class="icon">🗄️</span><span>Inventory</span>
+    </a>
+    <a href="/requests" class="nav-link {% if '/requests' in request.path %}active{% endif %}">
+      <span class="icon">📋</span><span>Requests</span>
+    </a>
+    <a href="/ml" class="nav-link {% if request.path=='/ml' %}active{% endif %}">
+      <span class="icon">🤖</span><span>ML Tools</span>
+    </a>
+  </nav>
+  <div class="sidebar-footer">BloodBank Pro v2.0</div>
+</div>
+
+<div class="main">
+  {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>
