@@ -1,10 +1,16 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask_login import (
+    LoginManager, UserMixin, login_user, logout_user,
+    login_required, current_user
+)
+from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import pandas as pd
 from datetime import datetime, timedelta
 import threading
 import os
 import sys
+from functools import wraps
 
 sys.path.insert(0, os.path.dirname(__file__))
 from database import init_db, get_connection, BLOOD_TYPES
@@ -14,7 +20,45 @@ from ml_engine import (
 )
 
 app = Flask(__name__)
-app.secret_key = "bloodbank-secret-2024"
+app.secret_key = os.environ.get("SECRET_KEY", "bloodbank-secret-2024-change-me")
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+login_manager.login_message = "Please log in to access this page."
+login_manager.login_message_category = "warning"
+
+
+class User(UserMixin):
+    def __init__(self, id, username, role, full_name):
+        self.id = id
+        self.username = username
+        self.role = role
+        self.full_name = full_name
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+    conn.close()
+    if row:
+        return User(row["id"], row["username"], row["role"], row["full_name"])
+    return None
+
+
+def admin_required(f):
+    """Restrict a route to admin role only."""
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return login_manager.unauthorized()
+        if current_user.role != "admin":
+            flash("Admin access required for this action.", "danger")
+            return redirect(url_for("dashboard"))
+        return f(*args, **kwargs)
+    return wrapper
+
 
 # ── Train ML models on startup ──────────────────────────────
 def train_models():
@@ -33,6 +77,85 @@ def train_models():
 
 init_db()
 train_models()  # train synchronously so models ready on first request
+
+
+# ── AUTH ROUTES ──────────────────────────────────────────────
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        conn = get_connection()
+        row = conn.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+        conn.close()
+        if row and check_password_hash(row["password_hash"], password):
+            user = User(row["id"], row["username"], row["role"], row["full_name"])
+            login_user(user)
+            next_page = request.args.get("next")
+            return redirect(next_page or url_for("dashboard"))
+        flash("Invalid username or password.", "danger")
+    return render_template("login.html")
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("login"))
+
+
+@app.route("/users")
+@login_required
+@admin_required
+def users():
+    conn = get_connection()
+    rows = conn.execute("SELECT id, username, role, full_name, created_at FROM users ORDER BY id").fetchall()
+    conn.close()
+    return render_template("users.html", users=[dict(r) for r in rows])
+
+
+@app.route("/users/add", methods=["POST"])
+@login_required
+@admin_required
+def add_user():
+    f = request.form
+    username = f.get("username", "").strip()
+    password = f.get("password", "")
+    role = f.get("role", "staff")
+    full_name = f.get("full_name", "")
+    if not username or not password:
+        flash("Username and password are required.", "danger")
+        return redirect(url_for("users"))
+    conn = get_connection()
+    try:
+        conn.execute("""
+            INSERT INTO users (username, password_hash, role, full_name)
+            VALUES (?, ?, ?, ?)
+        """, (username, generate_password_hash(password), role, full_name))
+        conn.commit()
+        flash(f"User '{username}' created.", "success")
+    except sqlite3.IntegrityError:
+        flash("That username already exists.", "danger")
+    conn.close()
+    return redirect(url_for("users"))
+
+
+@app.route("/users/<int:user_id>/delete", methods=["POST"])
+@login_required
+@admin_required
+def delete_user(user_id):
+    if user_id == current_user.id:
+        flash("You can't delete your own account.", "danger")
+        return redirect(url_for("users"))
+    conn = get_connection()
+    conn.execute("DELETE FROM users WHERE id=?", (user_id,))
+    conn.commit()
+    conn.close()
+    flash("User removed.", "success")
+    return redirect(url_for("users"))
 
 
 # ── PAGES ────────────────────────────────────────────────────
@@ -110,6 +233,7 @@ def donors():
 
 
 @app.route("/donors/add", methods=["GET", "POST"])
+@login_required
 def add_donor():
     if request.method == "POST":
         f = request.form
@@ -147,6 +271,7 @@ def donor_detail(donor_id):
 
 
 @app.route("/donors/<int:donor_id>/edit", methods=["GET", "POST"])
+@login_required
 def edit_donor(donor_id):
     conn = get_connection()
     donor = dict(conn.execute("SELECT * FROM donors WHERE id=?", (donor_id,)).fetchone())
@@ -181,6 +306,7 @@ def inventory():
 
 
 @app.route("/inventory/add", methods=["POST"])
+@login_required
 def add_stock():
     f = request.form
     exp_default = (datetime.now() + timedelta(days=42)).strftime("%Y-%m-%d")
@@ -205,6 +331,7 @@ def blood_requests():
 
 
 @app.route("/requests/add", methods=["POST"])
+@login_required
 def add_request():
     f = request.form
     conn = get_connection()
@@ -219,6 +346,7 @@ def add_request():
 
 
 @app.route("/requests/<int:req_id>/fulfill", methods=["POST"])
+@login_required
 def fulfill_request(req_id):
     conn = get_connection()
     conn.execute("UPDATE requests SET status='fulfilled', fulfilled_at=? WHERE id=?",

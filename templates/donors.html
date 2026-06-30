@@ -3,7 +3,9 @@
 {% block content %}
 <div class="topbar">
   <h1>👤 Donors</h1>
+  {% if current_user.is_authenticated %}
   <a href="/donors/add" class="btn btn-primary">+ Add Donor</a>
+  {% endif %}
 </div>
 <div class="content">
 

@@ -64,12 +64,30 @@ def init_db():
         month TEXT,
         year INTEGER
     );
+
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT DEFAULT 'staff',
+        full_name TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
     """)
 
     # Seed with sample data if empty
     count = c.execute("SELECT COUNT(*) FROM donors").fetchone()[0]
     if count == 0:
         _seed_sample_data(c)
+
+    # Seed default admin account if no users exist
+    user_count = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    if user_count == 0:
+        from werkzeug.security import generate_password_hash
+        c.execute("""
+            INSERT INTO users (username, password_hash, role, full_name)
+            VALUES (?, ?, ?, ?)
+        """, ("admin", generate_password_hash("admin123"), "admin", "Administrator"))
 
     conn.commit()
     conn.close()

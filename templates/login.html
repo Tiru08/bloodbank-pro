@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BloodBank Pro — Login</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0F1923;--surface:#162330;--surface2:#1E3040;
+  --accent:#E63946;--text:#ECF0F1;--dim:#8899AA;--border:#253545;
+  --danger:#E74C3C;--warning:#F39C12;--success:#2ECC71;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);
+  min-height:100vh;display:flex;align-items:center;justify-content:center}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:36px 32px;width:100%;max-width:380px}
+.logo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:8px}
+.logo-icon{width:42px;height:42px;background:var(--accent);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:22px}
+.logo-text{font-size:18px;font-weight:700}
+.subtitle{text-align:center;color:var(--dim);font-size:13px;margin-bottom:26px}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;color:var(--dim);margin-bottom:6px;font-weight:600}
+.form-control{width:100%;padding:11px 13px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-size:14px;outline:none}
+.form-control:focus{border-color:var(--accent)}
+.btn-login{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;
+  border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px}
+.btn-login:hover{background:#c62834}
+.flash{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px}
+.flash-danger{background:#4d1e1e;color:var(--danger)}
+.flash-warning{background:#4d3a1e;color:var(--warning)}
+.flash-success{background:#1e4d35;color:var(--success)}
+.hint{margin-top:20px;text-align:center;font-size:11px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="login-card">
+  <div class="logo">
+    <div class="logo-icon">🩸</div>
+    <div class="logo-text">BloodBank Pro</div>
+  </div>
+  <div class="subtitle">Staff login required to manage records</div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="flash flash-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST">
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input name="username" class="form-control" required autofocus>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input name="password" type="password" class="form-control" required>
+    </div>
+    <button type="submit" class="btn-login">Log In</button>
+  </form>
+
+  <div class="hint">Default admin: <strong>admin</strong> / <strong>admin123</strong> — change this after first login</div>
+</div>
+</body>
+</html>

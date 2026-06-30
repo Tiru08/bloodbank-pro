@@ -4,6 +4,7 @@
 <div class="topbar"><h1>📋 Blood Requests</h1></div>
 <div class="content">
 
+  {% if current_user.is_authenticated %}
   <div class="card" style="margin-bottom:18px">
     <div class="card-title">New Blood Request</div>
     <form method="POST" action="/requests/add" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
@@ -36,6 +37,7 @@
       <button type="submit" class="btn btn-primary">Submit</button>
     </form>
   </div>
+  {% endif %}
 
   <div class="table-wrap">
     <table>
@@ -61,10 +63,12 @@
           </td>
           <td style="color:var(--dim);font-size:12px">{{ r.requested_at[:16] if r.requested_at else '—' }}</td>
           <td>
-            {% if r.status == 'pending' %}
+            {% if r.status == 'pending' and current_user.is_authenticated %}
             <form method="POST" action="/requests/{{ r.id }}/fulfill" style="display:inline">
               <button type="submit" class="btn btn-success btn-sm">✓ Fulfill</button>
             </form>
+            {% elif r.status == 'pending' %}
+            <span style="color:var(--dim);font-size:12px">⏳ Pending</span>
             {% else %}
             <span style="color:var(--dim);font-size:12px">Done</span>
             {% endif %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}— Users{% endblock %}
+{% block content %}
+<div class="topbar"><h1>👥 Staff Accounts</h1></div>
+<div class="content">
+
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-title">Add Staff Account</div>
+    <form method="POST" action="/users/add" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div>
+        <label class="form-label">Full Name</label>
+        <input name="full_name" class="form-control" style="width:160px">
+      </div>
+      <div>
+        <label class="form-label">Username</label>
+        <input name="username" class="form-control" style="width:140px" required>
+      </div>
+      <div>
+        <label class="form-label">Password</label>
+        <input name="password" type="password" class="form-control" style="width:140px" required>
+      </div>
+      <div>
+        <label class="form-label">Role</label>
+        <select name="role" class="form-control" style="width:110px">
+          <option value="staff">Staff</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">+ Add User</button>
+    </form>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Full Name</th><th>Username</th><th>Role</th><th>Created</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td style="color:var(--dim)">{{ u.id }}</td>
+          <td style="font-weight:600">{{ u.full_name or '—' }}</td>
+          <td>{{ u.username }}</td>
+          <td>
+            {% if u.role == 'admin' %}<span class="badge badge-danger">ADMIN</span>
+            {% else %}<span class="badge badge-info">STAFF</span>{% endif %}
+          </td>
+          <td style="color:var(--dim);font-size:12px">{{ u.created_at[:10] if u.created_at else '—' }}</td>
+          <td>
+            {% if u.id != current_user.id %}
+            <form method="POST" action="/users/{{ u.id }}/delete" style="display:inline"
+                  onsubmit="return confirm('Remove this user?')">
+              <button type="submit" class="btn btn-secondary btn-sm" style="color:var(--danger)">Remove</button>
+            </form>
+            {% else %}
+            <span style="color:var(--dim);font-size:12px">You</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
